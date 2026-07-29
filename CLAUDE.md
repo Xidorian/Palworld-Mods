@@ -23,3 +23,16 @@ Then skim:
   Read `UE4SS.log` for our tagged `[..]` output. Ctrl+R hot-reload is broken here — use the
   file-watcher; turn it OFF and do a game restart when finalizing (clears orphaned scan loops).
 - I read the UE4SS log for the user — they just press keys in-game and say "done".
+
+## Changelog & release standard
+- **Log every mod change.** Whenever we change a mod, record it in that mod's own
+  `CHANGELOG.md` (in its repo folder) as part of the same change — not later. Add entries
+  under an `## [Unreleased]` heading (create it if missing) using the existing style: bold
+  section labels (`**Added**`, `**Changed**`, `**Fixed**`, `**Removed**`) with dashed bullets.
+  A mod with no changelog yet (e.g. PredatorStealth) gets one created on its first logged change.
+- **Gate packaging on the changelog.** Before building a release zip, review the diff since the
+  last version and confirm `CHANGELOG.md` reflects **all** of it — nothing shipped is missing.
+  Then rename `[Unreleased]` to the new version number and package.
+- **Gate mod-site upload on the changelog.** Do not update the mod on mod sites (Nexus / mod.io /
+  Steam) until the changelog is complete and versioned. The site's posted changes should match
+  `CHANGELOG.md` for that version. Remember both zip variants ship (regular + `-Steam-`).
