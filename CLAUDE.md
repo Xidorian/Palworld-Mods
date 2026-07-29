@@ -12,7 +12,10 @@ Then skim:
 ## The hub is our knowledge base
 This `Palworld-Mods` folder is the umbrella project and single source of truth: the bulk of our
 data and findings (`PALWORLD_MODDING_REFERENCE.md`, `PalClassification.csv`, `PROGRESS.md`, art).
-The individual mods are sub-projects under this umbrella — draw on it and give back to it:
+The mods are "sub" projects of it in the loosest sense only — **nothing in a mod literally points
+at this hub.** No mod imports it, reads a path into it, or depends on it in any way; a shipped mod
+is fully standalone. This folder is purely a reference database **we** (you + Claude) consult while
+building — the connection lives in our workflow, not in the software:
 - **Pull from past experience first.** Before deriving anything, check here — odds are we already
   confirmed the lever, table, or gotcha in a previous mod.
 - **Add new discoveries back here.** Any internal we confirm or lesson we learn while working on a
@@ -22,11 +25,12 @@ The individual mods are sub-projects under this umbrella — draw on it and give
 ## Working style / preferences
 - **Goal:** make the game HARDER. Reject any design that lets the player come out ahead
   (e.g. a death penalty that grants points). Prefer data-driven where it lowers runtime load.
-- **Repos:** each mod is a sub-project under the `Palworld-Mods` umbrella, but is its OWN public
-  GitHub repo — `Xidorian/PunishingDeath`, `Xidorian/PredatorStealth`. THIS folder is the shared
-  hub (`Xidorian/Palworld-Mods`): the knowledge base, PROGRESS, PalClassification.csv, and art
-  only — no mod source lives here. Because each mod is a separate repo, on disk they sit as sibling
-  folders next to the hub (`..\PunishingDeath\`, `..\PredatorStealth\`), not nested inside it.
+- **Repos:** each mod is its OWN public GitHub repo — `Xidorian/PunishingDeath`,
+  `Xidorian/PredatorStealth` — and stands completely alone (no dependency on the hub). They're
+  "sub" projects of the `Palworld-Mods` umbrella only conceptually. THIS folder is the shared hub
+  (`Xidorian/Palworld-Mods`): the knowledge base, PROGRESS, PalClassification.csv, and art only —
+  no mod source lives here. Because each mod is a separate repo, on disk they sit as sibling folders
+  next to the hub (`..\PunishingDeath\`, `..\PredatorStealth\`), not nested inside it.
 - **Git:** I commit locally as we go after each meaningful change and tell the user; the user runs
   `git push` (in whichever repo the change is in).
 - **Deploy loop:** edit `Scripts\main.lua` in that mod's repo folder → copy into
