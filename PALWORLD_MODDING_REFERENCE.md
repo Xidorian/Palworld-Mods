@@ -268,3 +268,29 @@ notes + the hide-to-escape design that de-aggro now unlocks (NEXT: build it).
 
 **Also:** re-test F7 de-aggro in a controlled scenario once a working method exists (the earlier
 test was chaotic — 12 pals, active melee, night). Current F7 = safe pause-only.
+
+---
+
+## 8. Pals, bases, death/permadeath levers  (desk research — VERIFY in-game before trusting)
+
+Gathered while scoping "The Long Walk Home" (see `PLANNED_MODS.md`). These are from community
+docs/mods, **not yet confirmed by our own reflection** — names/signatures drift per patch.
+
+- **Summon/deploy a party pal at a chosen spot:** party pals ("otomo") are stored on
+  `BP_OtomoPalHolderComponent`; **`ActivateOtomo(int32 SlotID, FTransform StartTransform, bool& IsSuccess)`**
+  spawns the *actual owned* pal (identity/level/IVs preserved). `StartTransform` = where it appears.
+  Driven by community "Multi Pals Deploy" mods.
+- **Base location:** `PalBaseCampModel` is hookable at runtime (base-range mods scale its `AreaRange`);
+  read base position from it for distance checks.
+- **The engine returns pals home by TELEPORT, not navigation.** Base workers out of range → teleport
+  to Palbox → run to task; summoned pals auto-recall/teleport on death/fast-travel. **Lesson: reliable
+  long-distance pal pathfinding to an arbitrary point does not exist — don't design on it.**
+- **Death Penalty world setting:** `All` drops items+equipment+pals into a recoverable **Death Chest**.
+- **Permadeath = two SEPARATE flags:** `bHardcore` (perma **player** death), `bPalLost` (perma **pal**
+  death — 0 HP = gone, no revive, native warning). `bCharacterRecreateInHardcore` = new char after
+  hardcore player death. **Prefer routing any "pal is gone" outcome through the native `bPalLost`
+  path over hand-deleting a pal object** (deletion is the save-corruption risk class). TODO: confirm
+  these are runtime-reachable (likely `PalGameSetting` / world-options struct) and whether the removal
+  can target a single pal.
+- **Broker recovery:** Pal Merchants sell back lost pals (Black Marketeer = rare ones) — but likely
+  **species-level** re-buy, not your exact individual.
