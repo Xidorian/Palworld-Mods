@@ -7,6 +7,7 @@ the gotchas/lessons that cost real time to learn. Reading it avoids re-deriving 
 
 Then skim:
 - [`PROGRESS.md`](PROGRESS.md) — live checklist of what's done and what's next.
+- [`PLANNED_MODS.md`](PLANNED_MODS.md) — future mods and ideas not yet started.
 - [`README.md`](README.md) — repo layout and each mod's purpose.
 
 ## The hub is our knowledge base

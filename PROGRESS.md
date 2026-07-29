@@ -54,34 +54,14 @@ Most pals hunt you; small prey stay passive; stealth actually works.
 - [ ] Finalize (rename to PredatorStealth, strip test keys, config header, auto-reload off)
 - [ ] Package + publish
 
-## ⬜ Mod 3 — Discard keybind  (not started)
-Drop/discard the held item with a keypress.
-
-## ⬜ Mod 4 — Auto-run persistence  (not started)
-Keep auto-run through menu / map / alt-tab.
-
-## ⬜ Mod 5 — Sharper Predators  (idea, not started)
-Make enemy pals' attacks harder to dodge = effectively "better aim". Fresh
-investigation (aiming subsystem untouched). Candidate levers to probe:
-- projectile behavior — speed / homing / spread (likely `DT_WazaDataTable` extra
-  columns, or the projectile blueprints);
-- AI target-leading / aim-error on the controller;
-- a difficulty/accuracy multiplier in `PalGameSetting` if one exists.
-Ship as its OWN mod (keep mods modular — see below), not folded into Predator & Stealth.
-
-## 💡 Future — Difficulty Master Suite  (idea)
-A single "all my difficulty mods in one" bundle for players who want everything.
-Build the individual mods standalone first; the suite just packages them. Do NOT
-lump features together prematurely — modular first, suite later.
+> **Planned mods & ideas** (Discard keybind, Auto-run persistence, Sharper Predators,
+> Difficulty Master Suite, parked ideas) live in [`PLANNED_MODS.md`](PLANNED_MODS.md).
 
 ---
 
 ## ✅ Solved by existing mods (no build needed)
 - [x] Alt-tab while crafting → **Background Crafting** (Steam Workshop)
 - [x] Less-forgiving fog of war → **Less Map Shroud (2 squares)** (installed)
-
-## 🅿️ Parked
-- Pals released into the world on death, walk home, may die (big standalone project)
 
 ## 🧰 Infrastructure / learnings
 - [x] UE4SS setup + hot-reload dev workflow
