@@ -6,7 +6,7 @@ UE4SS Lua mods for Palworld (single-player / client). Each mod folder drops into
 ## Mods
 | Mod | Status | What it does |
 |-----|--------|--------------|
-| **PunishingDeath** | ✅ Released | Lose current-level EXP progress on death; level never drops (exploit-proof). |
+| **PunishingDeath** | ✅ Released (v2.0.0) | Lose ~10% of total EXP on death — drops a level and strips that level's techs + tech/stat points, exploit-proof. (v1 was a milder no-de-level progress drain.) |
 | **AIProbe** (Predator & Stealth) | 🔨 WIP | Most pals hunt you, small prey stay passive; crouch/line-of-sight/vision-cone stealth; level-scaled detection. Folder will be renamed `PredatorStealth` on release. |
 
 See [PROGRESS.md](PROGRESS.md) for the live checklist.
