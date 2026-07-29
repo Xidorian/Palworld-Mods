@@ -9,13 +9,24 @@ Then skim:
 - [`PROGRESS.md`](PROGRESS.md) — live checklist of what's done and what's next.
 - [`README.md`](README.md) — repo layout and each mod's purpose.
 
+## The hub is our knowledge base
+This `Palworld-Mods` folder is the umbrella project and single source of truth: the bulk of our
+data and findings (`PALWORLD_MODDING_REFERENCE.md`, `PalClassification.csv`, `PROGRESS.md`, art).
+The individual mods are sub-projects under this umbrella — draw on it and give back to it:
+- **Pull from past experience first.** Before deriving anything, check here — odds are we already
+  confirmed the lever, table, or gotcha in a previous mod.
+- **Add new discoveries back here.** Any internal we confirm or lesson we learn while working on a
+  mod gets written up in the hub (usually `PALWORLD_MODDING_REFERENCE.md`), not left buried in one
+  mod's code — so everything stays accessible from this one location and every mod benefits.
+
 ## Working style / preferences
 - **Goal:** make the game HARDER. Reject any design that lets the player come out ahead
   (e.g. a death penalty that grants points). Prefer data-driven where it lowers runtime load.
-- **Repos:** each mod is its OWN public GitHub repo — `Xidorian/PunishingDeath`,
-  `Xidorian/PredatorStealth`. THIS folder is the shared hub (`Xidorian/Palworld-Mods`): the
-  knowledge base, PROGRESS, PalClassification.csv, and art only — no mod source lives here.
-  Mods are cloned as sibling folders (`..\PunishingDeath\`, `..\PredatorStealth\`).
+- **Repos:** each mod is a sub-project under the `Palworld-Mods` umbrella, but is its OWN public
+  GitHub repo — `Xidorian/PunishingDeath`, `Xidorian/PredatorStealth`. THIS folder is the shared
+  hub (`Xidorian/Palworld-Mods`): the knowledge base, PROGRESS, PalClassification.csv, and art
+  only — no mod source lives here. Because each mod is a separate repo, on disk they sit as sibling
+  folders next to the hub (`..\PunishingDeath\`, `..\PredatorStealth\`), not nested inside it.
 - **Git:** I commit locally as we go after each meaningful change and tell the user; the user runs
   `git push` (in whichever repo the change is in).
 - **Deploy loop:** edit `Scripts\main.lua` in that mod's repo folder → copy into
