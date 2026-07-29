@@ -60,6 +60,20 @@ Drop/discard the held item with a keypress.
 ## ⬜ Mod 4 — Auto-run persistence  (not started)
 Keep auto-run through menu / map / alt-tab.
 
+## ⬜ Mod 5 — Sharper Predators  (idea, not started)
+Make enemy pals' attacks harder to dodge = effectively "better aim". Fresh
+investigation (aiming subsystem untouched). Candidate levers to probe:
+- projectile behavior — speed / homing / spread (likely `DT_WazaDataTable` extra
+  columns, or the projectile blueprints);
+- AI target-leading / aim-error on the controller;
+- a difficulty/accuracy multiplier in `PalGameSetting` if one exists.
+Ship as its OWN mod (keep mods modular — see below), not folded into Predator & Stealth.
+
+## 💡 Future — Difficulty Master Suite  (idea)
+A single "all my difficulty mods in one" bundle for players who want everything.
+Build the individual mods standalone first; the suite just packages them. Do NOT
+lump features together prematurely — modular first, suite later.
+
 ---
 
 ## ✅ Solved by existing mods (no build needed)
