@@ -33,6 +33,14 @@ name still exists before trusting it, but the patterns and lessons hold.
 
 ## 1. UE4SS Lua API — patterns & gotchas
 
+**File I/O for player-editable config WORKS** (confirmed in this Steam-Workshop build): standard
+Lua `io.open` is available, and `debug.getinfo(1,"S").source` returns this script's real path (with
+an `@` prefix) so you can derive the mod dir and read a sibling file (e.g. `PreyList.txt` next to
+`Scripts/`). Guard everything in `pcall` and fall back to built-in defaults. The UE4SS **ImGui GUI
+is DISABLED** here (`GuiConsoleEnabled = 0`), so an in-game menu isn't viable — a config file is the
+shippable way to let players customize.
+
+
 **Core functions:** `StaticFindObject(path)`, `FindFirstOf(shortClass)`, `FindAllOf(shortClass)`,
 `NotifyOnNewObject(class, cb)`, `RegisterHook("/Script/...:Fn", cb)`, `RegisterKeyBind(Key.F8, cb)`
 (also `ModifierKey.CONTROL`), `LoopAsync(ms, cb)` (return true to stop), `ExecuteInGameThread(cb)`,

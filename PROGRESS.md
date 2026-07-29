@@ -27,7 +27,11 @@ Most pals hunt you; small prey stay passive; stealth actually works.
 - [x] Export `PalClassification.csv` (reusable data archive)
 
 **Core system**
-- [x] Data-driven classification: aggressive-except-small-docile-prey (753 species) — WORKING
+- [x] Classification redesign: **aggressive by default, curated PREY allowlist** (was a too-broad
+      HP<=110 rule that flagged most pals as prey). The vanilla `Escape_to_Battle` flee-then-fight
+      pals are now aggressive; only an explicit list stays passive.
+- [x] **Player-editable `PreyList.txt`** (plain-text checklist, `#`=aggressive) loaded at startup
+      via `io.open` + `debug.getinfo` path resolution — CONFIRMED working. F9 prints species key.
 - [x] Force-aggro predators in range with line-of-sight
 - [x] Wild-only filter (never turns your own pals hostile)
 - [x] Crouch stealth (detection shrinks when crouched) — CONFIRMED in-game
