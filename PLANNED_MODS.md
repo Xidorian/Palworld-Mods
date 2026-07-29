@@ -11,17 +11,18 @@ _Legend: ⬜ not started · 💡 idea · 🅿️ parked_
 ## ⬜ Mod 3 — Discard keybind
 Drop/discard the held item with a keypress.
 
-## ⬜ Mod 4 — Auto-run persistence
-Keep auto-run through menu / map / alt-tab.
+## ⬜ Mod 4 — Automation QoL
+A bundle of "keep things running" quality-of-life fixes so background actions don't stop
+when the game normally interrupts them:
 
-Also keep **building and crafting** running while in the map, inventory, and similar
-menus — not just alt-tab. The **Background Crafting** mod (Steam Workshop, already
-installed) only handles the alt-tab case; this would extend that persistence to the
-other UI states so production doesn't pause when you open menus.
-
-**Crouch cancels auto-run** — auto-run stops the moment you crouch. It should survive
-crouching too (crouch-walk while auto-running). Relevant because Predator & Stealth
-wants you crouched for stealth, so losing auto-run on crouch is a real friction.
+- **Auto-run persistence** — keep auto-run through menu / map / alt-tab, and through
+  **crouch** (auto-run currently stops the moment you crouch; it should survive crouch-walk).
+  Crouch matters because Predator & Stealth wants you crouched for stealth, so losing
+  auto-run on crouch is real friction.
+- **Building & crafting persistence** — keep building and crafting running while in the map,
+  inventory, and similar menus, not just alt-tab. The **Background Crafting** mod (Steam
+  Workshop, already installed) only handles the alt-tab case; this extends that persistence
+  to the other UI states so production doesn't pause when you open menus.
 
 ## 💡 Mod 5 — Sharper Predators
 Make enemy pals' attacks harder to dodge = effectively "better aim". Fresh
