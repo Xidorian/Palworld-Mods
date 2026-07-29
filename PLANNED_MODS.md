@@ -19,6 +19,10 @@ menus — not just alt-tab. The **Background Crafting** mod (Steam Workshop, alr
 installed) only handles the alt-tab case; this would extend that persistence to the
 other UI states so production doesn't pause when you open menus.
 
+**Crouch cancels auto-run** — auto-run stops the moment you crouch. It should survive
+crouching too (crouch-walk while auto-running). Relevant because Predator & Stealth
+wants you crouched for stealth, so losing auto-run on crouch is a real friction.
+
 ## 💡 Mod 5 — Sharper Predators
 Make enemy pals' attacks harder to dodge = effectively "better aim". Fresh
 investigation (aiming subsystem untouched). Candidate levers to probe:
