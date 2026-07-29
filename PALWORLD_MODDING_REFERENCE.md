@@ -157,7 +157,52 @@ these presets — static, all-or-nothing, **no stealth**. That's why we build ou
 - **Less Map Shroud (2 squares)** — smaller map-reveal radius (`worldmapUIMaskClearSize`, default ~50).
 
 ## 6. Open threads
-- Confirm `ChangeHate` signature/effect → build the safe de-aggro button, **hide-to-escape** timer,
-  and **prey-sneak** suppression (all from one function).
+- Crack de-aggro (see §7) → unlocks de-aggro button, **hide-to-escape** timer, **prey-sneak**.
 - Load measurement on a clean single instance.
 - Tune ranges / cone / rear% / crouch% / level scaling.
+- Finalize Predator & Stealth: rename `AIProbe` → `PredatorStealth`, strip dev keys/monitor,
+  config header, auto-reload OFF, package + publish. Then commit + push.
+
+---
+
+## 7. Hate system deep-dive & de-aggro plan  (NEXT SESSION STARTS HERE)
+
+**How aggro works (our model):**
+- Each wild pal's AI controller has a hate system: `ctrl:GetHateSystem()` → `PalHate`.
+- **`HateMap`** = a map of `Actor -> hateValue`. The pal attacks whoever has the **highest** hate.
+- **`FindMostHateTarget()`** = returns that highest-hate actor (its current target). Caveat: it
+  returns the top entry even at ~0 hate, so it's a weak "is it actually aggro'd" signal alone.
+- Hate is ADDED by: `DamageEvent` (you hit it — or it hits you), `AttackSuccessEvent`,
+  `ForceHateUp_...`, our `ForceBattleStartToTarget`, and `ChangeHate`.
+- **`HateTimerHandle`** = a timer, almost certainly hate decay / target re-evaluation. This is
+  probably the real mechanism behind natural "lost interest."
+- **`TargetPlayers`** (on the controller) is a SEPARATE list from `HateMap` (enemy-players list),
+  not the same as who's being attacked.
+
+**Confirmed dead end:** `ChangeHate(player, -N)` ADDS/registers the player (passive pals went
+`none -> player`); it does not reduce hate. It's an aggro lever, not a de-aggro one.
+
+**De-aggro test plan — do it CONTROLLED:** aggro exactly ONE pal, then step OUT of melee so
+`DamageEvent` stops re-adding hate, and read values before/after each attempt:
+1. **Read the actual number.** Add a diagnostic that reads the player's value in `HateMap`
+   (figure out TMap access in UE4SS Lua — try `hs.HateMap:Find(player)`, or iterate the map).
+   Knowing the real value is prerequisite to everything else.
+2. **Try `ChangeHate(player, 0)`** (user's idea) — maybe 0 neutralizes where negative wrapped to a
+   huge unsigned add.
+3. **Change BOTH hate and the target** (user's idea) — a locked current-target may persist even at
+   0 hate; look for a "set/clear target" on the controller or `PalHate` and clear it too.
+4. **Shorten `HateTimerHandle`** (user's idea) — set/force the decay timer to ~1s so hate expires
+   fast → natural de-aggro without fighting the map.
+5. **Remove the player key from `HateMap`** directly (TMap remove) — last resort, container op is
+   crash-risky, test carefully.
+
+**Hide-to-escape design (the goal these unlock):**
+- In the scan, for any pal whose top hate target is the player, track "time since it last had LOS
+  to you" (`LineOfSightTo`).
+- When you break LOS (duck behind a structure), start a **"searching" countdown (~3s)**.
+- If LOS stays broken past the countdown → trigger de-aggro (whichever method above works).
+- Result: real "break line of sight to lose them" stealth. Same de-aggro call also powers the
+  manual F7 button and **prey-sneak** (suppress a fleeing prey's target while you're crouched/hidden).
+
+**Also:** re-test F7 de-aggro in a controlled scenario once a working method exists (the earlier
+test was chaotic — 12 pals, active melee, night). Current F7 = safe pause-only.
