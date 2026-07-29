@@ -124,6 +124,20 @@ Exported to **`PalClassification.csv`** in this repo. Useful columns:
 **Our classification:** prey = `Hp <= ~110` AND `AIResponse` not `Warlike`/`Kill_All`; everything
 else is aggressive. Match a spawned pal to its row via species key = lower(className minus `BP_`/`_C`).
 
+### Native-detection offload — INVESTIGATED & REJECTED (keep the runtime poll)
+Tested whether enlarging the game's own sight could replace our per-scan acquire poll:
+- **`ViewingDistance` in `DT_PalMonsterParameter` IS runtime-writable** (`rowData.ViewingDistance = 3000`
+  on all 753 rows, readback confirmed; runtime-only, reverts on restart). So the data lever works.
+- **But offloading detection to the engine is a dead end for THIS mod:** even if pals detect at range,
+  **`AIResponse` governs the reaction** — most are `Escape`/`NotInterested`, so they'd flee/ignore, not
+  attack. Making them hostile means overriding `AIResponse → Warlike` for everything = the static,
+  all-or-nothing pak-mod approach, which **loses our live control** (per-pal range, level scaling,
+  crouch cone, hide-to-escape, prey list). Our runtime poll is what buys that control and it's cheap
+  (one `FindAllOf` + gated raycasts every 1.5s). **Decision: keep polling; tune `scan_ms`.**
+- Side note: on `BP_FunnelCharacter_DreamDemon_C` (a special "funnel" pal), `PerceptionComponent` was
+  **non-null** — contradicts the "perception null on wild pals" note above; may be funnel-pal-specific,
+  don't over-trust either way. `BlockDetectionParams`/`bOverwriteBlockDetectionParams` also live on the ctrl.
+
 ### Aggression presets (blueprints)
 `/Game/Pal/Blueprint/Controller/AIResponsePreset/` — `escape`, `NotInterested`, `Friendly`,
 `Warlike`, `Kill_All`, `Boss`, `VillageNPC`. Plus `AISightResponsePreset/` — `Citizen`, `Police`,
