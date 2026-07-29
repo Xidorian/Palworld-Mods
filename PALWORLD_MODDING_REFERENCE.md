@@ -124,6 +124,20 @@ Exported to **`PalClassification.csv`** in this repo. Useful columns:
 **Our classification:** prey = `Hp <= ~110` AND `AIResponse` not `Warlike`/`Kill_All`; everything
 else is aggressive. Match a spawned pal to its row via species key = lower(className minus `BP_`/`_C`).
 
+### Ranged-vs-melee pal classification — NOT cleanly derivable (skip it)
+Tried to auto-build a "ranged pals" list from game data to give ranged pals a bigger hide gate:
+- **Skill tables:** `DT_WazaDataTable` (per-skill; key columns `WazaType`, `Category`, `MinRange`,
+  `MaxRange`) and `DT_WazaMasterLevel` (`PalId`, `WazaID`, `Level` — which skills a pal learns at
+  each level; **Level 1 = its default**). **Join key: `WazaData.WazaType == WazaMasterLevel.WazaID`**
+  (no enum layer). `PalId` is an FName → use `:ToString()`. `PalId` lowercased == our species key.
+- **Result: no clean ranged signal.** `Category==1` on 637/712 pals (it's "attack", not "shot").
+  Level-1 `MaxRange` is 3000–5000 on 550+ pals **including melee-behaving ones** (Anubis 4000,
+  Alpaca 4000, CuteFox 4000, KendoFrog 5000) — the data encodes skill *capability/AI-use-range*, not
+  whether the pal keeps its distance. So "long-range-capable" is the norm (~78%), not a minority.
+- **Also redundant:** hide-to-escape already requires NO line-of-sight, and a pal without LOS can't
+  shoot you — so "can't shake it while it's firing" is enforced by the LOS check regardless of range.
+- **Decision: one hide-distance gate for all pals** (no ranged/melee split, no RangedList.txt).
+
 ### Native-detection offload — INVESTIGATED & REJECTED (keep the runtime poll)
 Tested whether enlarging the game's own sight could replace our per-scan acquire poll:
 - **`ViewingDistance` in `DT_PalMonsterParameter` IS runtime-writable** (`rowData.ViewingDistance = 3000`
