@@ -129,9 +129,16 @@ these presets — static, all-or-nothing, **no stealth**. That's why we build ou
   `AttackSuccessEvent`, `SelfDeathEvent`.
 - Properties: **`HateMap`** (target → hate value), **`HateTimerHandle`** (hate has a timer → likely
   decays over time).
-- **De-aggro plan:** `hs:ChangeHate(player, -big)` to wipe your hate. Safer than array-poking.
-  NOTE: `TargetPlayers` (on the controller) and the `HateMap` are not the same list — a pal you
-  provoked by attacking may hold hate in `HateMap` without being in `TargetPlayers`.
+- **`ChangeHate(player, -N)` does NOT de-aggro — it BACKFIRES.** Tested: negative values registered
+  the player as a target on previously-passive pals (`topTarget none -> BP_Player_Female_C`) and did
+  not drop an actively-hunting pal. So `ChangeHate` is effectively an *aggro* lever (sign ignored /
+  adds the target), not a de-aggro one. Real de-aggro is still UNSOLVED — next idea: read the actual
+  `HateMap` value for the player, and/or directly remove the player key from `HateMap`, and/or find
+  a decay/clear path via `HateTimerHandle`. Test on a pal that is NOT in active melee (combat
+  re-adds hate every hit via `DamageEvent`, so a one-shot won't stick).
+- `TargetPlayers` (on the controller) and the `HateMap` are not the same list — a pal you provoked
+  by attacking may hold hate in `HateMap` without being in `TargetPlayers`. `FindMostHateTarget`
+  returns the top map entry even at ~0 hate, so it's a poor "is it aggro'd" signal on its own.
 - **Native de-aggro is LEASH-based**, not stealth: functions like `On Character Out Of Leash Range`
   fire when the pal is dragged too far from its home/spawn. A boss chased to 64m with line-of-sight
   broken for ~20s never gave up. So "hide to escape" must be built on `ChangeHate`, not the leash.
