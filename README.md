@@ -1,23 +1,27 @@
 # Xidorian Studios — Palworld Mods
 
-UE4SS Lua mods for Palworld (single-player / client). Each mod folder drops into
-`Palworld\Mods\NativeMods\UE4SS\Mods\` (see each mod's own README).
+Shared knowledge base and studio assets for my Palworld UE4SS Lua mods. **Each mod
+now lives in its own repository:**
 
-## Mods
-| Mod | Status | What it does |
-|-----|--------|--------------|
-| **PunishingDeath** | ✅ Released (v2.0.0) | Lose ~10% of total EXP on death — drops a level and strips that level's techs + tech/stat points, exploit-proof. (v1 was a milder no-de-level progress drain.) |
-| **AIProbe** (Predator & Stealth) | 🔨 WIP | Most pals hunt you, small prey stay passive; crouch/line-of-sight/vision-cone stealth; level-scaled detection. Folder will be renamed `PredatorStealth` on release. |
+| Mod | Repo | What it does |
+|-----|------|--------------|
+| **Punishing Death** | [PunishingDeath](https://github.com/Xidorian/PunishingDeath) | Die and lose ~10% of your total EXP — drops a level and strips that level's technologies + tech/stat points. Exploit-proof. |
+| **Predators & Stealth** | [PredatorStealth](https://github.com/Xidorian/PredatorStealth) | Most wild Pals hunt you on sight; a curated prey list stays passive. Line-of-sight detection, crouch stealth, level-scaled awareness, hide-to-escape. |
 
-See [PROGRESS.md](PROGRESS.md) for the live checklist.
-
-## Repo layout
-- `PunishingDeath/` — released mod (source, README, design notes, mod-page copy).
-- `PunishingDeath-Steam/` — Steam Workshop package variant (no `enabled.txt`).
-- `AIProbe/` — Predator & Stealth work-in-progress.
+## This repo (the hub)
+Shared dev material — not shipped with any mod:
+- `PALWORLD_MODDING_REFERENCE.md` — consolidated UE4SS internals knowledge base (function levers, EXP/level chain, pal AI + hate system, data tables, hard-won gotchas).
+- `PROGRESS.md` — progress checklist across all mods.
+- `PalClassification.csv` — exported pal AI / classification data (reference archive).
 - `art/` — cover art and studio logo.
-- `PalClassification.csv` — exported pal AI/classification data (reference archive).
-- `PROGRESS.md` — progress checklist.
+- `CLAUDE.md` — working notes / session instructions.
+
+## Local layout
+```
+PalworldMods\        this hub (docs + art)
+PunishingDeath\      clone of the PunishingDeath repo
+PredatorStealth\     clone of the PredatorStealth repo
+```
 
 ## Requirements
 UE4SS (RE-UE4SS) for Palworld. PC (Steam) only — not Game Pass / console.
