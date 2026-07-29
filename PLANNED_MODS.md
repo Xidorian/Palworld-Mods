@@ -14,6 +14,11 @@ Drop/discard the held item with a keypress.
 ## ⬜ Mod 4 — Auto-run persistence
 Keep auto-run through menu / map / alt-tab.
 
+Also keep **building and crafting** running while in the map, inventory, and similar
+menus — not just alt-tab. The **Background Crafting** mod (Steam Workshop, already
+installed) only handles the alt-tab case; this would extend that persistence to the
+other UI states so production doesn't pause when you open menus.
+
 ## 💡 Mod 5 — Sharper Predators
 Make enemy pals' attacks harder to dodge = effectively "better aim". Fresh
 investigation (aiming subsystem untouched). Candidate levers to probe:
