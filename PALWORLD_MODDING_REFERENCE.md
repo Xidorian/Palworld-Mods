@@ -122,26 +122,46 @@ else is aggressive. Match a spawned pal to its row via species key = lower(class
 `Villain`. Pak mods (e.g. "Pals Attack Player", Nexus 2102) make everything hostile by overriding
 these presets — static, all-or-nothing, **no stealth**. That's why we build our own at runtime.
 
-### The HATE SYSTEM (aggro tables)  ← current investigation
-`ctrl:GetHateSystem()` → **`PalHate`**. This is where aggro actually lives.
-- Functions: **`ChangeHate`** (add/subtract hate on a target — the de-aggro lever),
-  `FindMostHateTarget`, `ForceHateUp_ForActiveAndAttackOtomoPal`, `DamageEvent`,
-  `AttackSuccessEvent`, `SelfDeathEvent`.
-- Properties: **`HateMap`** (target → hate value), **`HateTimerHandle`** (hate has a timer → likely
-  decays over time).
-- **`ChangeHate(player, -N)` does NOT de-aggro — it BACKFIRES.** Tested: negative values registered
-  the player as a target on previously-passive pals (`topTarget none -> BP_Player_Female_C`) and did
-  not drop an actively-hunting pal. So `ChangeHate` is effectively an *aggro* lever (sign ignored /
-  adds the target), not a de-aggro one. Real de-aggro is still UNSOLVED — next idea: read the actual
-  `HateMap` value for the player, and/or directly remove the player key from `HateMap`, and/or find
-  a decay/clear path via `HateTimerHandle`. Test on a pal that is NOT in active melee (combat
-  re-adds hate every hit via `DamageEvent`, so a one-shot won't stick).
-- `TargetPlayers` (on the controller) and the `HateMap` are not the same list — a pal you provoked
-  by attacking may hold hate in `HateMap` without being in `TargetPlayers`. `FindMostHateTarget`
-  returns the top map entry even at ~0 hate, so it's a poor "is it aggro'd" signal on its own.
-- **Native de-aggro is LEASH-based**, not stealth: functions like `On Character Out Of Leash Range`
-  fire when the pal is dragged too far from its home/spawn. A boss chased to 64m with line-of-sight
-  broken for ~20s never gave up. So "hide to escape" must be built on `ChangeHate`, not the leash.
+### The HATE SYSTEM (aggro tables)  — DE-AGGRO SOLVED ✅
+`ctrl:GetHateSystem()` → **`PalHate`**. Hate lives here, but the *active target* lives on the
+controller (see below) — you must clear BOTH to de-aggro.
+- PalHate functions: `ChangeHate`, `FindMostHateTarget`, `ForceHateUp_ForActiveAndAttackOtomoPal`,
+  `DamageEvent`, `AttackSuccessEvent`, `SelfDeathEvent` (from reflection — **no read/clear getter**).
+- PalHate properties: **`HateMap`** (a real `TMap<FWeakObjectPtr target, FStruct hateInfo>`),
+  **`HateTimerHandle`**.
+
+**✅ CONFIRMED DE-AGGRO (tested on Deer/Alpaca/Boar, no crash):** clear both containers on the
+game thread —
+```lua
+ctrl:GetHateSystem().HateMap:Empty()   -- wipes hate (topTarget -> none, mapCount 1->0)
+ctrl.TargetPlayers:Empty()             -- wipes the ACTIVE target (tp 1->0) -- THIS is what
+                                       --   actually keeps them attacking; hate-only is NOT enough
+```
+The pal drops the aggro indicator and returns to wandering. Do it inside `ExecuteInGameThread`.
+`TargetPlayers` is a plain `TArray` on the controller; UE4SS `TArray`/`TMap` only expose `:Empty()`
+(no per-key/index remove), and both `:Empty()` calls are SAFE via UE4SS's typed-container path
+(the old "TArray:Empty crash" was a different bad context, not this).
+
+**Reading the HateMap (diagnostics):** `hm:ForEach(function(k,v) ... end)` — `k` is an
+`FWeakObjectPtr` (use `k:Get()` to resolve the actor; `classNameOf(k)` fails on it), `v` is a
+`UScriptStruct` (no clean field read from Lua — `type()` only says "UScriptStruct"). `hm:Find(key)`
+/ `hm:Contains(key)` do NOT work with a raw player object (key type is weak-ptr → Set-pusher
+mismatch; `Find` throws "Map key not found"). Return `true` from the `ForEach` cb to stop early.
+
+**Dead ends (all tested, don't revisit):**
+- **`ChangeHate(player, 0)` = no-op** (map/target unchanged). **`ChangeHate(player, -N)` = backfire**
+  (registers the player as a target on passive pals). `ChangeHate` is an aggro lever, not de-aggro.
+- **`SetActiveAI(false)` = FREEZE, not de-aggro** — pal stops attacking but keeps `tp=1`, keeps the
+  hate map, keeps the aggro indicator, frozen in place even when hit. Reversible via `SetActiveAI(true)`.
+  Not a substitute for the Empty+Empty recipe.
+- Controller has NO purpose-built end-combat/clear-target function (full `PalAIController` dump has
+  only aggro *adders*: `AddTargetNPC`, `AddTargetPlayer_ForEnemy`, `CopyTargetFromOtherAI`,
+  `ForceHateUp…`). `K2_ClearFocus` clears look-focus only, not the target.
+- **Native de-aggro is LEASH-based**, not stealth (`On Character Out Of Leash Range`); a boss chased
+  64m with LOS broken ~20s never gave up. So "hide to escape" must be built on our Empty+Empty call.
+
+`FindMostHateTarget` returns the top map entry even at ~0 hate, so it's a weak "is it aggro'd" signal;
+`ctrl.TargetPlayers:GetArrayNum()` (`tp`) is the reliable "actively hunting" signal.
 
 ---
 
@@ -165,7 +185,13 @@ these presets — static, all-or-nothing, **no stealth**. That's why we build ou
 
 ---
 
-## 7. Hate system deep-dive & de-aggro plan  (NEXT SESSION STARTS HERE)
+## 7. Hate system deep-dive & de-aggro  (SOLVED — see the recipe in §3)
+
+**DE-AGGRO IS SOLVED.** `HateMap:Empty()` + `TargetPlayers:Empty()` on the game thread (full recipe
+and dead-ends in §3, "The HATE SYSTEM"). The rest of this section is the original investigation
+notes + the hide-to-escape design that de-aggro now unlocks (NEXT: build it).
+
+
 
 **How aggro works (our model):**
 - Each wild pal's AI controller has a hate system: `ctrl:GetHateSystem()` → `PalHate`.

@@ -37,11 +37,16 @@ Most pals hunt you; small prey stay passive; stealth actually works.
 - [x] Crash hardening (removed unsafe array op; aggro-per-scan cap; safe defaults)
 
 **Remaining**
+- [x] **Crack de-aggro** ✅ — `HateMap:Empty()` + `TargetPlayers:Empty()` on the game thread
+      (F2 test, confirmed on Deer/Alpaca/Boar). ChangeHate/SetActiveAI = dead ends. See reference §3.
 - [ ] Test line-of-sight hiding (break view behind rocks/walls)
-- [ ] Safe de-aggro button (F7 is pause-only; need the proper end-battle function)
-- [ ] Hide-to-escape timer (lose pursuers after N seconds out of sight) — needs the de-aggro fn
+- [ ] Wire de-aggro into a real F7 button (replace pause-only) using the Empty+Empty recipe
+- [ ] Hide-to-escape timer (lose pursuers after N seconds out of sight) — now unblocked
 - [ ] Load measurement on a clean single instance (post-restart)
 - [ ] Tuning pass (ranges, cone width, rear %, crouch %)
+      - Vision cone: currently applied EVERY scan (main.lua:138). Change to **crouch-only**
+        (standing = omnidirectional detection; only sneaking behind gives the rear bonus).
+      - Cone feels **too tight** at front_half_angle=75 — widen so more of "in front" = full range.
 - [ ] Finalize (rename to PredatorStealth, strip test keys, config header, auto-reload off)
 - [ ] Package + publish
 
