@@ -252,14 +252,51 @@ layer for STEALTH over only the pals actively hunting you** (`tp>0` = a handful 
 SOLVED de-aggro (`HateMap:Empty()` + `TargetPlayers:Empty()`) for crouch-suppress + hide-to-escape.
 PoC in progress: PalSchema flip `Sheepball→Warlike` to confirm the static patch path applies here.
 
+### 3.9.1 RESOLVED 2026-07-30 — pivot shipped as data + tiny runtime
+
+All confirmed in-game. **Predator & Stealth is now a PalSchema data patch + a ~105-line
+hide-to-escape script; the runtime scanner is retired and the traversal stutter is gone.**
+
+- **PalSchema patches `DT_PalMonsterParameter` cleanly** (real table logged as
+  `DT_PalMonsterParameter_Common`). Confirmed writable columns: **`AIResponse`** (bare enum
+  string, e.g. `"Warlike"`), **`ViewingDistance`**, **`HearingRate`**. Patch files:
+  `…/UE4SS/Mods/PalSchema/mods/<Name>/raw/*.jsonc` (jsonc comments — header AND trailing — load
+  fine; log says `N rows updated, 0 errors`). Row key = the `Pal` column in `PalClassification.csv`.
+- **Two-tier NATIVE detection (this is the whole stealth model, from data — no runtime):**
+  - **SIGHT** = `ViewingDistance` (≈ metres) + cone (`ViewingAngle`) + LOS occlusion → **AGGRO**.
+    Directional (rear blind spot). Crouch does **NOT** affect sight.
+  - **HEARING** = `HearingRate` (≈ **1:1 metres**; confirmed by tuning) + the player's crouch-aware
+    `BP_PlayerSoundEmitterComponent` → a **"?" notice: the pal turns to face the noise**, then normal
+    SIGHT can pick you up → aggro. Omnidirectional, **through walls**, **crouch silences it entirely**.
+    Running is louder (bigger effective range) than walking. So: hearing ≈ sight range makes
+    "turn-to-look" become "see-you"; set hearing a touch under sight (it's omni, so equal-number
+    over-covers). Sharp-eared species get higher `HearingRate`, deaf/heavy ones lower.
+  - The noise emitter is flags+logic (`IsCrouching/IsSprint/IsSliding`) — **no settable noise scalar**,
+    so you drive the pal side (`HearingRate`), not the player side.
+- **Level-gap sight (WoW-style) is NOT doable per-instance.** Probed a live hunter: a pal has **no
+  per-instance ViewingDistance / sight-range field** (all `View`-named instance props are camera:
+  `bFindCameraComponentWhenViewTarget`, `RemoteViewPitch`, …). Sight range is read from the DataTable
+  **per species**. So true per-you scaling would need a proximity poll = the stutter we removed →
+  rejected. Ship the **tier approximation** (tougher species → bigger `ViewingDistance`, tracks zone level).
+- **Hide-to-escape without a scan:** hook **`/Script/Pal.PalAIController:AddTargetPlayer_ForEnemy`**
+  (fires when a pal targets the player) → drop the controller into a tiny watch-list → a 1 s tick
+  LOS-checks *only* those hunters and clears aggro when you break LOS + distance (crouch halves both).
+  De-aggro = the §3 `HateMap:Empty()`+`TargetPlayers:Empty()` recipe. **Keep the hook callback minimal**
+  (record the controller only) — the earlier crash was heavy reflection (`K2_GetPawn`+`classNameOf`) in
+  a hook during fast-travel streaming; a minimal hook is stable.
+- **Tooling:** `PredatorStealth/tools/gen_aggression.sh` generates the patch from category values in one
+  CONFIG block (JSON has no variables, so a build step is the "define once" mechanism) — reads this hub's
+  `PalClassification.csv`, writes `palschema/aggressive.jsonc`. Prey = the species excluded there.
+
 ---
 
 ## 4. Mods in this repo
 - **PunishingDeath** (released): lose in-level EXP progress on death; level never changes.
-- **AIProbe** = **Predator & Stealth** (WIP; folder renamed on release): predators hunt you, small
-  prey stay passive; crouch + line-of-sight + vision-cone + level-scaled detection. Dev keys:
-  **F7** de-aggro (WIP, via ChangeHate), **F8** enable/disable, **F9** nearest-pal info readout,
-  **F10** dump controller/hate-system functions. `monitor` logs any pal targeting the player.
+- **Predators & Stealth** (v2.0.0, `Xidorian/PredatorStealth`): predators hunt you, small prey stay
+  passive; two-sense stealth (sight cone + LOS = aggro; hearing = notice, crouch silences it). Now a
+  **PalSchema data patch** (`AIResponse=Warlike` + per-pal `ViewingDistance`/`HearingRate`, generated
+  by `tools/gen_aggression.sh`) **+ a ~105-line hide-to-escape script** (hook `AddTargetPlayer_ForEnemy`
+  → watch-list → `Empty`+`Empty` de-aggro). No runtime scanner → no stutter. Requires PalSchema. See §3.9.1.
 
 ## 5. Existing mods we use instead of building
 - **Background Crafting** (Steam Workshop) — keep crafting while tabbed out.
