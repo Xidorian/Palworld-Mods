@@ -19,6 +19,10 @@ when the game normally interrupts them:
   **crouch** (auto-run currently stops the moment you crouch; it should survive crouch-walk).
   Crouch matters because Predator & Stealth wants you crouched for stealth, so losing
   auto-run on crouch is real friction.
+- **Crouch state persistence through actions** — rolling while crouched should leave you
+  crouched, not stand you up. Actions shouldn't silently break the stealth stance (same
+  spirit as auto-run-through-crouch above). Likely a `bIsCrouched` re-assert after the
+  roll/dodge action completes.
 - **Building & crafting persistence** — keep building and crafting running while in the map,
   inventory, and similar menus, not just alt-tab. The **Background Crafting** mod (Steam
   Workshop, already installed) only handles the alt-tab case; this extends that persistence
@@ -60,12 +64,25 @@ that genuinely can't be done is the literal walk.
   `ActivateOtomo(int32 SlotID, FTransform StartTransform, bool& IsSuccess)` spawns the *actual* owned
   pal (identity/level/IVs preserved) — and `StartTransform` lets us choose the spawn spot (the death
   location). Community mods (Multi Pals Deploy) already drive this path.
-- **Home location = obtainable.** `PalBaseCampModel` is hookable at runtime; base position → distance.
-- **🔴 The blocker: no reliable long-distance navigation.** The engine itself doesn't walk pals home —
-  it **teleports** them (base workers out of range → teleport to Palbox → run to task; summoned pals
-  auto-recall/teleport on death/fast-travel). Two independent confirmations (this + Hungry Pal Rescuer
-  teleporting strays) that cross-map pathfinding can't be trusted. **So the "journey" must be an
-  abstraction (timer + visible milling), not a watch-them-hike simulation.**
+- **Home location = obtainable (and there may be several).** `PalBaseCampModel` is hookable at runtime;
+  base position → distance. The player can own **multiple bases**, so "home" = the **nearest** base to the
+  death spot: enumerate all `PalBaseCampModel`s, pick min distance. That nearest-base distance is the input
+  to the survival odds.
+- **🟡 The blocker, refined: the navmesh is probably NOT the wall — the engine's teleport *choice* is.**
+  Earlier framing said cross-map pathfinding "can't be trusted." Live observation revises this: **field
+  Mammorests roam large starting-island territories on foot** — genuine long-range navmesh traversal, not
+  teleport. So the mesh clearly carries a big creature across a large connected area. What actually blocks us
+  is that **owned/summoned/worker pals run a different AI path that recalls/teleports** them (base workers
+  out of range → teleport to Palbox; summoned pals auto-recall on death/fast-travel; Hungry Pal Rescuer
+  teleports strays). Wild field bosses run a roam-in-territory AI that *does* path. So the real open question
+  is: **can we force a directed long-range `MoveTo` on an *owned* pal (or push it onto the roam AI) instead of
+  letting it hit the teleport path?** Two unknowns gate a real walk even if we can:
+    - **Water / island boundaries** — those Mammorests roam *within* a landmass; a death spot and base split by
+      ocean may be unpathable (roam AI likely never picks cross-water destinations).
+    - **Distance ceiling** — roaming picks points within a territory radius; a single cross-map `MoveTo` may get
+      culled or fail. Untested.
+  **Until those are verified, still design the "journey" as an abstraction (timer + visible local milling),
+  with a real walk as a stretch goal if the directed-`MoveTo`-on-owned-pal path pans out.**
 - **🔴 No organic peril.** A wandering ex-pet has nothing to kill it (wild pals don't fight each other;
   Predator & Stealth aggros pals at the *player*, not at a loose pal). "May die" must be scripted odds.
 - **Hardcore gives a SAFE death outcome — tap it.** `bHardcore` (perma player death) and `bPalLost`
@@ -77,7 +94,8 @@ that genuinely can't be done is the literal walk.
 
 **Design that flies (native levers only):**
 1. Player dies → `ActivateOtomo` each party pal as a living actor at the death `FTransform`.
-2. Survival window: pals visibly mill about; odds from death→base distance (`PalBaseCampModel`) + pal level.
+2. Survival window: pals visibly mill about; odds from death→**nearest**-base distance (min over all
+   `PalBaseCampModel`s) + pal level.
 3. Outcome — **survive:** returned to Palbox via the engine's own out-of-range teleport-home.
    **fail:** removed via native `bPalLost` path. Penalty tiers: *soft* = lost but re-buyable at a
    Pal Merchant; *hard* = `bPalLost` permadeath, gone for good.
@@ -89,5 +107,9 @@ that genuinely can't be done is the literal walk.
 - **Hook timing:** does the game force-recall the party on death *before* we can `ActivateOtomo`?
   Likely need to hook the death/drop event and inject ejection at the right moment.
 - Does `ActivateOtomo` behave with a **dead/respawning owner**, or assume a live nearby player?
+- **Directed long-range `MoveTo` on an owned pal** — can we issue one toward the nearest base and have the
+  pal actually path there (the crux now that field Mammorests prove the navmesh carries long-range roam), or
+  does the owned-pal AI always intercept with a teleport/recall? If it teleports, can we suppress that and/or
+  push the pal onto the wild roam AI? Also test cross-water and cross-map distance limits.
 
 Reusable engine levers from this pass are logged in `PALWORLD_MODDING_REFERENCE.md` §8.
