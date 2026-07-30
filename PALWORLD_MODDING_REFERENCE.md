@@ -277,7 +277,9 @@ hide-to-escape script; the runtime scanner is retired and the traversal stutter 
   per-instance ViewingDistance / sight-range field** (all `View`-named instance props are camera:
   `bFindCameraComponentWhenViewTarget`, `RemoteViewPitch`, …). Sight range is read from the DataTable
   **per species**. So true per-you scaling would need a proximity poll = the stutter we removed →
-  rejected. Ship the **tier approximation** (tougher species → bigger `ViewingDistance`, tracks zone level).
+  rejected. Even a species-tier approximation (bigger `ViewingDistance` for tougher/rarer species) was
+  set aside — **v2.0.0 ships a flat `ViewingDistance`=25**; any level/threat scaling is deferred to a
+  future opt-in. (Note: `Rarity` is the good threat signal, not `Hp` — Hp is clustered 80–119.)
 - **Hide-to-escape without a scan:** hook **`/Script/Pal.PalAIController:AddTargetPlayer_ForEnemy`**
   (fires when a pal targets the player) → drop the controller into a tiny watch-list → a 1 s tick
   LOS-checks *only* those hunters and clears aggro when you break LOS + distance (crouch halves both).
