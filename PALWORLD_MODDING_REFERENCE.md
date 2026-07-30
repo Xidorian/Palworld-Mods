@@ -138,7 +138,7 @@ Tried to auto-build a "ranged pals" list from game data to give ranged pals a bi
   shoot you — so "can't shake it while it's firing" is enforced by the LOS check regardless of range.
 - **Decision: one hide-distance gate for all pals** (no ranged/melee split, no RangedList.txt).
 
-### Native-detection offload — INVESTIGATED & REJECTED (keep the runtime poll)
+### Native-detection offload — INVESTIGATED & REJECTED (keep the runtime poll)  ⚠️ SUPERSEDED 2026-07-30 — see §3.9 (poll MEASURED at 80–150 ms = the stutter; offload reopened)
 Tested whether enlarging the game's own sight could replace our per-scan acquire poll:
 - **`ViewingDistance` in `DT_PalMonsterParameter` IS runtime-writable** (`rowData.ViewingDistance = 3000`
   on all 753 rows, readback confirmed; runtime-only, reverts on restart). So the data lever works.
@@ -198,6 +198,59 @@ mismatch; `Find` throws "Map key not found"). Return `true` from the `ForEach` c
 
 `FindMostHateTarget` returns the top map entry even at ~0 hate, so it's a weak "is it aggro'd" signal;
 `ctrl.TargetPlayers:GetArrayNum()` (`tp`) is the reliable "actively hunting" signal.
+
+### 3.9 UPDATE 2026-07-30 — poll cost MEASURED (it's the stutter); hooks viable; PalSchema pivot
+
+Session driven by a mod-page report: hard traversal stutter on 3440×1440@120, gone when the mod is
+disabled. What we learned (supersedes the "keep polling, it's cheap" call above):
+
+- **The poll is NOT cheap — it IS the stutter.** `os.clock()` timing around `scan()` measured
+  **63–150 ms per scan for only 12–27 pals** (~3–5 ms/pal), all synchronous on the game thread →
+  dropped frames. Cost is dominated by per-pal `LineOfSightTo` raycasts + `GetLevel`/reflection,
+  **not** `FindAllOf`. On a weak laptop it's brutal; a 60 Hz/1080p player may not feel it (~8 ms
+  budget at 120 Hz is why the reporter did).
+- **Stutter meter (reusable technique):** a 2nd `LoopAsync(50 ms)` sampler on the game thread; when a
+  frame stalls the queued sample fires late and the wall-clock gap spikes. `os.clock()` is WALL-time
+  on Windows. Report worst-gap + count of gaps >100 ms per ~5 s window = machine-independent hitch
+  number. Measured worst 124–255 ms, several hitches / 5 s = real stutter.
+- **Roster redesign did NOT fix it.** Swapped per-tick `FindAllOf` for a cached roster (seed once +
+  `NotifyOnNewObject("/Script/Pal.PalCharacter")`, cache class/prey, resolve controller lazily).
+  Scans stayed 80–140 ms → confirms per-pal raycast/reflection is the cost, not enumeration. Polling
+  can't be made cheap enough.
+- **Wild-AI decision hooks ARE hookable and fire.** `BP_MonsterAIController_Wild_C` (Blueprint) →
+  `ForceEscaleStartForOutside` (Pocketpair's "Escale" = the FLEE decision), `ForceBattleStartForOutside`
+  (FIGHT), and native `PalAIController:AddTargetPlayer_ForEnemy` (marks player). Full path e.g.
+  `/Game/Pal/Blueprint/Controller/Monster/BP_MonsterAIController_Wild.BP_MonsterAIController_Wild_C:ForceEscaleStartForOutside`.
+  All registered + fired. **Census matched the data exactly:** `NightFox` (`Escape_to_Battle`) → FLEE;
+  `NegativeKoala`/`CloverFairy` (`Warlike`) → FIGHT/ADD_TARGET. So the hook to convert flee→fight is
+  `ForceEscaleStartForOutside`.
+- **Hooks + streaming = crash risk.** During a fast-travel got `EXCEPTION_ACCESS_VIOLATION` (near-null
+  deref) — a hook/roster callback touching an object mid-construction/destruction; `pcall` can't catch
+  it (native fault, see §1). This install already had 5 crash dumps predating any hooks and fast-travel
+  is a known Palworld crasher, so not conclusively ours — but keep per-object reflection OFF the
+  streaming path.
+- **PalSchema CAN patch this (v0.6.1, installed).** Edits DataTable rows AND Blueprint defaults via
+  conflict-free JSON. Patches live in `…/UE4SS/Mods/PalSchema/mods/<ModName>/raw/<file>.json` (subfolder
+  `raw` = DataTable edits; also `blueprints`, `pals`, …; mod-folder name = display name, no per-mod
+  config). `PalSchema/config/config.json` has `enableDebugLogging`. Format:
+  ```json
+  { "DT_PalMonsterParameter": { "Sheepball": { "AIResponse": "Warlike" } } }
+  ```
+  Only targeted rows/fields change. Row keys = exact `Pal` column in `PalClassification.csv`. This is a
+  **static** patch that PERSISTS across restart (unlike the runtime `rowData.X=Y` writes above, which revert).
+- **Reload reality (amends §0):** live install had `EnableAutoReloadingLuaMods = 0` (not the `1` §0
+  assumes) so focus-reload did nothing, AND **Ctrl+R hot-reload tore every mod down to vanilla and did
+  NOT restart them** — the **C++** `PalSchema` mod can't hot-reload, breaking the chain. **Only a full
+  game restart reliably loads changes here.** Restore `EnableAutoReloadingLuaMods=1` for the focus loop,
+  or accept full restarts.
+
+**DIRECTION — HYBRID, not pure-data.** Pure `AIResponse→Warlike` for all non-prey kills the stutter
+(native AI + native detection, zero poll) and even closes the "neutral pals ignore you" gap — BUT loses
+the STEALTH half (crouch cone, hide-to-escape, level scaling) that the poll provided and that names the
+mod. Reconciliation: **data patch for AGGRESSION** (no acquire poll → no stutter) **+ a thin runtime
+layer for STEALTH over only the pals actively hunting you** (`tp>0` = a handful → cheap), using the
+SOLVED de-aggro (`HateMap:Empty()` + `TargetPlayers:Empty()`) for crouch-suppress + hide-to-escape.
+PoC in progress: PalSchema flip `Sheepball→Warlike` to confirm the static patch path applies here.
 
 ---
 
