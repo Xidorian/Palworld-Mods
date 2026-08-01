@@ -45,12 +45,38 @@ currently you can't see where you're pointing unless you ADS. Options to probe: 
 the game's native reticle widget (HUD/UMG) so it stays visible, or draw a lightweight
 crosshair overlay ourselves. QoL, its own standalone mod.
 
+## 💡 Mod 7 — Mod Options Framework (shared in-game settings menu)
+A reusable **in-game options screen for mods** — ours *and* other modders'. Instead of every
+mod shipping its own config file or keybind toggles, this is a standalone framework mod that
+provides a settings UI any mod can register its options into (toggles, sliders, dropdowns,
+keybinds), with values persisted and exposed back to the registering mod at runtime. Think of
+it as the shared "settings panel" layer the whole suite (and the wider community) can build on.
+
+Directly supersedes the [Config UX open question](#-config-ux--in-game-options-menu-items-open-question-cross-cutting)
+below — this IS the "extend the options menu" investigation, promoted to its own mod. Scope
+work still gated on that feasibility question:
+- **Rendering path.** This build has UE4SS ImGui disabled (`GuiConsoleEnabled = 0`), so an ImGui
+  overlay isn't available as-is. Options to probe: hook Palworld's native settings UMG and inject
+  our own option rows, build a self-drawn UMG widget, or lean on an existing UI framework mod
+  (PalSchema / UMG-adding community mods) rather than reinventing it.
+- **Registration API.** A clean, documented way for another mod to declare its settings (name,
+  type, default, range/choices, on-change callback) without touching this mod's internals —
+  keep the coupling one-directional (mods depend on the framework, never the reverse).
+- **Persistence.** Where values live (per-mod config files it manages, or a single shared store)
+  and how a mod reads its current values each run.
+- **Standalone + public.** Its own repo like every other mod; if it's genuinely reusable it's a
+  strong candidate to document publicly for other modders. Modular first — do not fold any
+  specific mod's settings into it; it only provides the shell.
+
 ## 💡 Difficulty Master Suite
 A single "all my difficulty mods in one" bundle for players who want everything.
 Build the individual mods standalone first; the suite just packages them. Do NOT
 lump features together prematurely — modular first, suite later.
 
 ## 🔧 Config UX — in-game options-menu items?  (open question, cross-cutting)
+**→ Promoted to [Mod 7 — Mod Options Framework](#-mod-7--mod-options-framework-shared-in-game-settings-menu).**
+This section stays as the feasibility notes that mod inherits.
+
 User wants mod settings exposed as **in-game option-menu items**, not config-file edits.
 CONSTRAINT: this build has the UE4SS ImGui GUI disabled (`GuiConsoleEnabled = 0`), so an
 ImGui overlay isn't available; hooking Palworld's native settings UMG is a big lift.
