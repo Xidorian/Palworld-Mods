@@ -45,28 +45,59 @@ currently you can't see where you're pointing unless you ADS. Options to probe: 
 the game's native reticle widget (HUD/UMG) so it stays visible, or draw a lightweight
 crosshair overlay ourselves. QoL, its own standalone mod.
 
-## 💡 Mod 7 — Mod Options Framework (shared in-game settings menu)
-A reusable **in-game options screen for mods** — ours *and* other modders'. Instead of every
-mod shipping its own config file or keybind toggles, this is a standalone framework mod that
-provides a settings UI any mod can register its options into (toggles, sliders, dropdowns,
-keybinds), with values persisted and exposed back to the registering mod at runtime. Think of
-it as the shared "settings panel" layer the whole suite (and the wider community) can build on.
+## 💡 Mod 7 — Mod Options Framework  (DISCOVERY DONE — likely ADOPT, not build)
+Original idea: build a reusable **in-game options screen** any mod (ours + other modders')
+registers its settings into, so mods stop shipping config files / keybind toggles.
 
-Directly supersedes the [Config UX open question](#-config-ux--in-game-options-menu-items-open-question-cross-cutting)
-below — this IS the "extend the options menu" investigation, promoted to its own mod. Scope
-work still gated on that feasibility question:
-- **Rendering path.** This build has UE4SS ImGui disabled (`GuiConsoleEnabled = 0`), so an ImGui
-  overlay isn't available as-is. Options to probe: hook Palworld's native settings UMG and inject
-  our own option rows, build a self-drawn UMG widget, or lean on an existing UI framework mod
-  (PalSchema / UMG-adding community mods) rather than reinventing it.
-- **Registration API.** A clean, documented way for another mod to declare its settings (name,
-  type, default, range/choices, on-change callback) without touching this mod's internals —
-  keep the coupling one-directional (mods depend on the framework, never the reverse).
-- **Persistence.** Where values live (per-mod config files it manages, or a single shared store)
-  and how a mod reads its current values each run.
-- **Standalone + public.** Its own repo like every other mod; if it's genuinely reusable it's a
-  strong candidate to document publicly for other modders. Modular first — do not fold any
-  specific mod's settings into it; it only provides the shell.
+**Discovery — 2026-08-01 (desk research): this already exists, and building our own is almost
+certainly wasted effort.**
+
+**[Mod Options Framework](https://www.nexusmods.com/palworld/mods/4408)** by Elvlin / "cloirecrom"
+— GitHub **[Elvlin/Mod-Options-Framework](https://github.com/Elvlin/Mod-Options-Framework)**,
+**MIT** (source + SDK), v0.1.10, actively maintained (updated 2026-08-01). It is exactly this mod,
+already built and better-architected than a first pass would be:
+- **Native UMG** — adds one "Mod Options" entry to Palworld's Esc menu with native-style per-mod
+  pages. **So our `GuiConsoleEnabled=0` constraint is moot** — that only disabled *ImGui*; this
+  never used ImGui. Kills the rendering-path blocker that gated the whole idea.
+- **No per-frame update / actor scan / timer / settings poll** — matches our anti-stutter rule.
+  Values publish on Apply via a generation counter; consumers `sync()` off an existing event.
+- **Documented Lua SDK** ([DEVELOPER_API.md](https://github.com/Elvlin/Mod-Options-Framework/blob/main/DEVELOPER_API.md)):
+  copy `PalModOptionsClient.lua` + `pmo_json.lua` from its DeveloperSDK into your mod's `Scripts/`,
+  then `local options = require("PalModOptionsClient")` →
+  `options.register_when_ready(schema, function(settings, err) … end)` →
+  read with `options.get("key")` / `options.get()`. Seven control types (boolean, integer, number,
+  enum, **keybind**, text, section), per-mod persistence at `PalModOptions\Scripts\config\<id>.ini`
+  (JSON-encoded lines), apply modes `event` / `restart_mod` / `game_restart`, cross-field
+  constraints, localization (17 locales), per-page theming, spelled-out multiplayer contract.
+- **Required vs optional dependency** patterns supported — a mod can hard-require it, or use it
+  when present and fall back to built-in defaults when absent (matches our `pcall`+defaults habit).
+
+**🔴 The one real blocker — UE4SS distribution mismatch.** The framework requires **UE4SS
+Experimental for Palworld** (dep id `UE4SSExperimentalPW`) and installs to
+`Pal\Binaries\Win64\ue4ss\Mods\PalModOptions\`. **Our build runs the Steam-Workshop NativeMods
+UE4SS** (`Palworld\Mods\NativeMods\UE4SS\Mods\…`) — a different distribution *and* mod path. So the
+decision hinges entirely on: **does our current Steam-Workshop UE4SS run this framework, or does
+adopting it mean migrating to UE4SS Experimental** (and re-homing PredatorStealth's runtime +
+PalSchema onto it)? Needs in-game verification.
+
+**Direction (build-vs-adopt).** Both *Reuse-first* and *API-vs-build* — plus our own reference note
+that hooking native settings UMG is "a big lift" — point at **adopting** this framework as
+consumers rather than reinventing it. Provisional plan, pending the user's call + the UE4SS-distro
+verification:
+1. Determine whether Mod Options Framework loads under our Steam-Workshop UE4SS, or requires
+   switching to UE4SS Experimental.
+2. If viable, integrate our mods as **optional** consumers (require-if-present, fall back to
+   existing `PreyList.txt`/keybind config) — e.g. expose PredatorStealth's prey list / viewing
+   distance and the QoL toggles as native option rows.
+3. Only build our own if a hard blocker rules the framework out (incompatible distro we won't
+   migrate to, or it's abandoned). If we do, this section's original spec (registration API,
+   persistence, standalone public repo) still applies.
+
+Reusable levers from this pass → log in `PALWORLD_MODDING_REFERENCE.md` once the distro question
+is settled in-game.
+
+Supersedes the [Config UX open question](#-config-ux--in-game-options-menu-items-open-question-cross-cutting)
+below (its feasibility notes are now answered by the above).
 
 ## 💡 Difficulty Master Suite
 A single "all my difficulty mods in one" bundle for players who want everything.
