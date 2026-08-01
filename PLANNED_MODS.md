@@ -45,7 +45,7 @@ currently you can't see where you're pointing unless you ADS. Options to probe: 
 the game's native reticle widget (HUD/UMG) so it stays visible, or draw a lightweight
 crosshair overlay ourselves. QoL, its own standalone mod.
 
-## 💡 Mod 7 — Mod Options Framework  (DISCOVERY DONE — likely ADOPT, not build)
+## 💡 Mod 7 — Mod Options Framework  (DECIDED 2026-08-01: ADOPT as consumers — gated on compat test)
 Original idea: build a reusable **in-game options screen** any mod (ours + other modders')
 registers its settings into, so mods stop shipping config files / keybind toggles.
 
@@ -80,18 +80,25 @@ decision hinges entirely on: **does our current Steam-Workshop UE4SS run this fr
 adopting it mean migrating to UE4SS Experimental** (and re-homing PredatorStealth's runtime +
 PalSchema onto it)? Needs in-game verification.
 
-**Direction (build-vs-adopt).** Both *Reuse-first* and *API-vs-build* — plus our own reference note
-that hooking native settings UMG is "a big lift" — point at **adopting** this framework as
-consumers rather than reinventing it. Provisional plan, pending the user's call + the UE4SS-distro
-verification:
-1. Determine whether Mod Options Framework loads under our Steam-Workshop UE4SS, or requires
-   switching to UE4SS Experimental.
-2. If viable, integrate our mods as **optional** consumers (require-if-present, fall back to
-   existing `PreyList.txt`/keybind config) — e.g. expose PredatorStealth's prey list / viewing
-   distance and the QoL toggles as native option rows.
-3. Only build our own if a hard blocker rules the framework out (incompatible distro we won't
-   migrate to, or it's abandoned). If we do, this section's original spec (registration API,
-   persistence, standalone public repo) still applies.
+**DECISION (2026-08-01): ADOPT as consumers.** Reuse-first + API-vs-build + our own "native UMG
+is a big lift" note all agree — don't reinvent a maintained, MIT, native, no-poll framework.
+Build our own ONLY if the compat test below rules it out (incompatible distro we won't migrate to,
+or it goes abandoned); the original build spec (registration API, persistence, standalone public
+repo) stays parked here as that fallback.
+
+**Next steps (ordered):**
+1. **🔬 COMPAT TEST (blocker — user runs in-game, next action).** Determine whether Mod Options
+   Framework loads under our **Steam-Workshop NativeMods UE4SS**, or forces a switch to **UE4SS
+   Experimental**. Test shape: install the framework + a minimal test consumer (from its
+   DeveloperSDK), launch, check whether **Esc → Mod Options** appears, and read `UE4SS.log` for its
+   load lines. Outcomes → (a) loads as-is: proceed to step 2; (b) needs Experimental: weigh the
+   cost of migrating our UE4SS distro (re-home PredatorStealth runtime + PalSchema) before
+   committing; (c) won't work: fall back to build-our-own.
+2. Integrate our mods as **OPTIONAL** consumers (require-if-present via `register_when_ready`, else
+   fall back to existing `PreyList.txt` / keybind config — matches our `pcall`+defaults habit).
+   First candidates: PredatorStealth's prey list + viewing distance, and the QoL toggles.
+3. Log the confirmed integration recipe (SDK copy-in, schema shape, distro verdict) into
+   `PALWORLD_MODDING_REFERENCE.md`.
 
 Reusable levers from this pass → log in `PALWORLD_MODDING_REFERENCE.md` once the distro question
 is settled in-game.
