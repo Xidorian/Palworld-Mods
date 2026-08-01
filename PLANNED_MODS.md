@@ -45,7 +45,7 @@ currently you can't see where you're pointing unless you ADS. Options to probe: 
 the game's native reticle widget (HUD/UMG) so it stays visible, or draw a lightweight
 crosshair overlay ourselves. QoL, its own standalone mod.
 
-## 💡 Mod 7 — Mod Options Framework  (DECIDED 2026-08-01: ADOPT as consumers — gated on compat test)
+## 💡 Mod 7 — Mod Options Framework  (DECIDED 2026-08-01: ADOPT as consumers — compat resolved on desk)
 Original idea: build a reusable **in-game options screen** any mod (ours + other modders')
 registers its settings into, so mods stop shipping config files / keybind toggles.
 
@@ -72,13 +72,17 @@ already built and better-architected than a first pass would be:
 - **Required vs optional dependency** patterns supported — a mod can hard-require it, or use it
   when present and fall back to built-in defaults when absent (matches our `pcall`+defaults habit).
 
-**🔴 The one real blocker — UE4SS distribution mismatch.** The framework requires **UE4SS
-Experimental for Palworld** (dep id `UE4SSExperimentalPW`) and installs to
-`Pal\Binaries\Win64\ue4ss\Mods\PalModOptions\`. **Our build runs the Steam-Workshop NativeMods
-UE4SS** (`Palworld\Mods\NativeMods\UE4SS\Mods\…`) — a different distribution *and* mod path. So the
-decision hinges entirely on: **does our current Steam-Workshop UE4SS run this framework, or does
-adopting it mean migrating to UE4SS Experimental** (and re-homing PredatorStealth's runtime +
-PalSchema onto it)? Needs in-game verification.
+**✅ The distro "blocker" is NOT one — we already run the required distro (resolved on disk
+2026-08-01).** The framework requires **UE4SS Experimental for Palworld** (dep id
+`UE4SSExperimentalPW`). Inspecting the install: `Mods\ManagedMods\UE4SSExperimentalPW\` is a Steam
+Workshop package (PackageName `UE4SSExperimentalPW`, version `experimental-palworld-6`, author Oak,
+Workshop id 3625223587) whose `InstallManifest.json` deploys every file **into
+`Mods\NativeMods\UE4SS\`**. In other words **our "Steam-Workshop NativeMods UE4SS" IS UE4SS
+Experimental** — same distribution, just the Steam-Workshop *layout*. There is no distro to migrate.
+The only thing that translates is the **install path**: the Nexus page's
+`Pal\Binaries\Win64\ue4ss\Mods\PalModOptions\` is the *manual* UE4SS layout; on our Steam-Workshop
+layout the framework drops into **`Mods\NativeMods\UE4SS\Mods\PalModOptions\`** and is enabled via
+`mods.txt` (`PalModOptions : 1`), exactly like every other mod we run. (Logged in the hub reference §0.)
 
 **DECISION (2026-08-01): ADOPT as consumers.** Reuse-first + API-vs-build + our own "native UMG
 is a big lift" note all agree — don't reinvent a maintained, MIT, native, no-poll framework.
@@ -87,17 +91,16 @@ or it goes abandoned); the original build spec (registration API, persistence, s
 repo) stays parked here as that fallback.
 
 **Next steps (ordered):**
-1. **🔬 COMPAT TEST (blocker — user runs in-game, next action).** Determine whether Mod Options
-   Framework loads under our **Steam-Workshop NativeMods UE4SS**, or forces a switch to **UE4SS
-   Experimental**. Test shape: install the framework + a minimal test consumer (from its
-   DeveloperSDK), launch, check whether **Esc → Mod Options** appears, and read `UE4SS.log` for its
-   load lines. Outcomes → (a) loads as-is: proceed to step 2; (b) needs Experimental: weigh the
-   cost of migrating our UE4SS distro (re-home PredatorStealth runtime + PalSchema) before
-   committing; (c) won't work: fall back to build-our-own.
+1. **🔬 Smoke test (low risk now — user runs in-game).** Install Mod Options Framework to
+   `Mods\NativeMods\UE4SS\Mods\PalModOptions\`, add `PalModOptions : 1` to `mods.txt`, drop in a
+   minimal test consumer from its DeveloperSDK (copy `PalModOptionsClient.lua` + `pmo_json.lua`
+   into the consumer's `Scripts/`, register a one-row schema), restart, and confirm **Esc → Mod
+   Options** renders the test page. Read `UE4SS.log` for its load lines. Also confirm our Palworld
+   revision ≥ **100619** (framework minimum). This is now a confirmation, not a make-or-break.
 2. Integrate our mods as **OPTIONAL** consumers (require-if-present via `register_when_ready`, else
    fall back to existing `PreyList.txt` / keybind config — matches our `pcall`+defaults habit).
    First candidates: PredatorStealth's prey list + viewing distance, and the QoL toggles.
-3. Log the confirmed integration recipe (SDK copy-in, schema shape, distro verdict) into
+3. Log the confirmed integration recipe (SDK copy-in, schema shape) into
    `PALWORLD_MODDING_REFERENCE.md`.
 
 Reusable levers from this pass → log in `PALWORLD_MODDING_REFERENCE.md` once the distro question

@@ -10,6 +10,13 @@ name still exists before trusting it, but the patterns and lessons hold.
 
 - **Game:** `C:\Program Files (x86)\Steam\steamapps\common\Palworld`
 - **UE4SS (non-standard, Steam Workshop build):** `...\Palworld\Mods\NativeMods\UE4SS\`
+  - **This Steam-Workshop UE4SS IS "UE4SS Experimental (Palworld)".** The Workshop package
+    `UE4SSExperimentalPW` (`...\Mods\ManagedMods\UE4SSExperimentalPW\`, author Oak, ver
+    `experimental-palworld-6`, Workshop id 3625223587, MinRevision 82182) is just the installer —
+    its `InstallManifest.json` deploys all UE4SS files INTO `Mods\NativeMods\UE4SS\`. So mods that
+    list a `UE4SSExperimentalPW` dependency (e.g. Mod Options Framework) already have it satisfied
+    here. Only the *layout* differs from a manual UE4SS install: their `Pal\Binaries\Win64\ue4ss\`
+    path maps to our `Mods\NativeMods\UE4SS\`, and mods enable via `mods.txt` (`ModName : 1`).
 - **Lua mods live in:** `...\UE4SS\Mods\<ModName>\Scripts\main.lua`
 - **Enable a mod:** add `ModName : 1` to `...\UE4SS\Mods\mods.txt` (this build uses mods.txt,
   not just `enabled.txt`). New mods / mods.txt edits need a game restart.
