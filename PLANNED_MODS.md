@@ -15,7 +15,8 @@ Drop/discard the held item with a keypress.
 A bundle of "keep things running" quality-of-life fixes so background actions don't stop
 when the game normally interrupts them:
 
-- **Auto-run persistence** — keep auto-run through menu / map / alt-tab, and through
+- **Auto-run persistence** — keep auto-run through menu / map / alt-tab, **taking damage**
+  (player currently stops auto-running whenever hit — noticed in playtest), and through
   **crouch** (auto-run currently stops the moment you crouch; it should survive crouch-walk).
   Crouch matters because Predator & Stealth wants you crouched for stealth, so losing
   auto-run on crouch is real friction.
@@ -38,10 +39,24 @@ investigation (aiming subsystem untouched). Candidate levers to probe:
 
 Ship as its OWN mod (keep mods modular), not folded into Predator & Stealth.
 
+## ⬜ Mod 6 — Always-on reticle  (QoL)
+Show the aiming reticle/crosshair at all times, not only while aiming down sights —
+currently you can't see where you're pointing unless you ADS. Options to probe: unhide
+the game's native reticle widget (HUD/UMG) so it stays visible, or draw a lightweight
+crosshair overlay ourselves. QoL, its own standalone mod.
+
 ## 💡 Difficulty Master Suite
 A single "all my difficulty mods in one" bundle for players who want everything.
 Build the individual mods standalone first; the suite just packages them. Do NOT
 lump features together prematurely — modular first, suite later.
+
+## 🔧 Config UX — in-game options-menu items?  (open question, cross-cutting)
+User wants mod settings exposed as **in-game option-menu items**, not config-file edits.
+CONSTRAINT: this build has the UE4SS ImGui GUI disabled (`GuiConsoleEnabled = 0`), so an
+ImGui overlay isn't available; hooking Palworld's native settings UMG is a big lift.
+Pragmatic path today = editable config file (like `PreyList.txt`) and/or keybind toggles.
+TODO: investigate whether the game's options menu can be extended (some UMG/PalSchema mods
+add UI) before committing to config-file-only. Applies to every mod's settings.
 
 ---
 
