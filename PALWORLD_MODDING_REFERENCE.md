@@ -93,9 +93,30 @@ walk `:GetSuperStruct()` for inherited members. Names via `x:GetFName():ToString
   event, which (1) re-grants status/tech points on the next natural level-up = a farm EXPLOIT, and
   (2) desyncs the HUD level from the character sheet. Clawing points back races the engine and is
   fragile. Correct design: change **EXP only**, keep Level fixed.
-- **Death detection:** poll `comp:IsDead()` via `LoopAsync` with a `wasDead` latch + `seenAlive`
-  guard; apply on the game thread. Do NOT hook `ClientRestart` (fires multiple times per death,
-  and not on fast travel).
+- **Death → penalty trigger — hook RESPAWN, not death (v2.1.0, probe-confirmed).** The old
+  `comp:IsDead()` `LoopAsync` poll is RETIRED: a 2s poll can't tell a real death from a revive and
+  races the brief dead window. The clean signal is that **the game itself separates revive from
+  respawn** on `PalPlayerCharacter`:
+  - **`CallRespawnDelegate`** — fires once on a **real death→respawn** (normal death, emergency
+    respawn, mount death). This is the penalty trigger. `RequestRespawn` (on `PalPlayerState`) fires
+    ~1s earlier = the respawn-button/point-select **commit**; `CallMoveToRespawnLocationDelegate`
+    rides alongside. Hook path `/Script/Pal.PalPlayerCharacter:CallRespawnDelegate`; apply on the
+    game thread with a short debounce (one respawn can broadcast more than once).
+  - **`CallReviveDelegate`** — fires on a **Herbil second-life / in-place revive** (and MP
+    ally-revive) INSTEAD of the respawn delegates. So hooking respawn **structurally exempts
+    revives** — you never detect Herbil at all. Confirmed: revive fired this, no respawn delegate, no
+    penalty.
+  - Death-side delegates `OnDeadCharacter` (`PalCharacter`), `OnDeadPlayer_Server`, `OnDyingDeadEnd_All`
+    fire on the death instant for BOTH real deaths and Herbil deaths — so keying on THESE reproduces
+    the double-penalty bug. Key on the respawn delegate, not these.
+  - State getters on `PalPlayerState`: `IsPlayerDead`, `IsPlayerDying`, **`IsPlayerCompletelyDead`**
+    (dying/downed vs must-respawn), plus `RequestRespawn`, `RequestSpawnMonsterForPlayer`.
+- **`ClientRestart` is NOT a death signal (tested, rejected).** Fires on **load-in**, in **bursts
+  unrelated to any death**, and **misses** actual deaths — unusable. (Supersedes the earlier note.)
+- **Pawn destroy+recreate is UNRELIABLE as a respawn tell** — one session recreated the pawn on
+  respawn (FName changed), another reused the same pawn id. The named `CallRespawnDelegate` is robust
+  where pawn-churn isn't. Also: the penalty reads/writes fine on a **mount death** despite the §1
+  "stale pawn while mounted" gotcha.
 
 ---
 
